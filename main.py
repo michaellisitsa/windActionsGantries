@@ -130,3 +130,8 @@ nb = 4.6 * b * fL / L
 Rh = 1/nh - 1/(2*nh**2) * (1 - math.exp(-2*nh)) #Eq B.7 Aerodynamic admittance function (h)
 Rb = 1/nb - 1/(2*nb**2) * (1 - math.exp(-2*nb)) #Eq B.8 Aerodynamic admittance function (b)
 R2 = math.pi**2 * SL * Rh * Rb / (2 * delta) #Eq B.6 Resonance response Factor
+v = n * math.sqrt(R2/(B2+R2)) #(Hz) Eq B.5 Up-crossing Frequency
+T = 600 #(s) Eq B.4 Averaging time for mean wind velocity
+kp = max(math.sqrt(2 * math.log(v * T)) + 0.6 / math.sqrt(2 * math.log(v * T)),3)
+cs_cd = (1 + 2 * kp * Iv * math.sqrt(B2 + R2))/ (1 + 7 * Iv)
+# %%
