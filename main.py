@@ -82,7 +82,7 @@ z_s = inputNumber("Reference Height for determining structural factor 'z_s' in m
 b = inputNumber("Length of Beam perpendicular to the wind 'b' in metres : ")
 h = inputNumber("Height of beam 'h' in metres : ")
 n = inputNumber("Natural Frequency of TODO: DET VERT/HORIZ bending frequency 'n' in Hz : ")
-vb = inputNumber("Wind speed : ")
+vb = inputNumber("Basic Wind speed 'vb' in m/s: ")
 z0, zmin = inputTerrain()
 mass = inputNumber("Enter the mass per unit area of beam at the mid-span 'mass' in kg/m : ")
 cf = inputNumber("Aerodynamic shape factor 'cf' : ")
@@ -133,5 +133,10 @@ R2 = math.pi**2 * SL * Rh * Rb / (2 * delta) #Eq B.6 Resonance response Factor
 v = n * math.sqrt(R2/(B2+R2)) #(Hz) Eq B.5 Up-crossing Frequency
 T = 600 #(s) Eq B.4 Averaging time for mean wind velocity
 kp = max(math.sqrt(2 * math.log(v * T)) + 0.6 / math.sqrt(2 * math.log(v * T)),3)
-cs_cd = (1 + 2 * kp * Iv * math.sqrt(B2 + R2))/ (1 + 7 * Iv)
-# %%
+cs = (1 + 7 * Iv * math.sqrt(B2)) / (1 + 7 * Iv) #size factor
+cd = (1 + 2 * kp * Iv * math.sqrt(B2 + R2)) / (1 + 7 * Iv * math.sqrt(B2)) #dynamic factor
+cs_cd = (1 + 2 * kp * Iv * math.sqrt(B2 + R2))/ (1 + 7 * Iv) #combined size and dynamic factor
+print(f'The structural factor is:\n'
+f'cs_cd = {cs_cd:3.2f}:\n'
+f'cs = {cs:7.2f}\n'
+f'cd = {cd:7.2f}')
