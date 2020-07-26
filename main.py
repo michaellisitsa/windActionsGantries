@@ -17,10 +17,32 @@ def inputNumber(message):
         else:
             return userInput
             break
+
+# %%
+def inputTerrain():
+    while True:
+        userInput = input("Terrain Category as per Table 4.1 (0 to 4):")
+        if userInput.isdigit() and 0 <= int(userInput) <= 4:
+            if int(userInput) == 0:
+                return 0.003, 1
+            elif int(userInput) == 1:
+                return 0.01, 1
+            elif int(userInput) == 2:
+                return 0.05, 2
+            elif int(userInput) == 3:
+                return 0.3, 5
+            elif int(userInput) == 4:
+                return 1, 10
+        print("Value entered is not an integer between 0 and 4")
+
+inputTerrain()
+# %%
 #Ask for input
 z = inputNumber("Enter the height above ground 'z' in metres:")
 z_s = inputNumber("Reference Height for determining structural factor 'z_s' in metres:")
 b = inputNumber("Length of Beam perpendicular to the wind 'b' in metres:")
 h = inputNumber("Height of beam 'h' in metres:")
+n = inputNumber("Natural Frequency of TODO: DET VERT/HORIZ bending frequency 'n' in Hz)
+z0, zmin = inputTerrain()
+#%%
 
-# %%
