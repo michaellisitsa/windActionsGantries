@@ -4,6 +4,9 @@ def inputNumber(message):
 
     Parameters:
     arg (str): Message to display on input
+
+    InputParameter:
+    Positive non-zero Number
     
     Returns:
     int:Returning Value
@@ -11,8 +14,10 @@ def inputNumber(message):
     while True:
         try:
             userInput = float(input(message))
+            if userInput <= 0:
+                raise ValueError()
         except ValueError:
-            print("This is not a number! Try Again")
+            print("This is not a positive non-zero number! Try Again")
             continue
         else:
             return userInput
@@ -30,7 +35,7 @@ def inputTerrain():
     zmin: Returning Value
     '''
     while True:
-        userInput = input("Terrain Category as per Table 4.1 (0 to 4):")
+        userInput = input("Terrain Category as per Table 4.1 (0 to 4) : ")
         if userInput.isdigit() and 0 <= int(userInput) <= 4:
             if int(userInput) == 0:
                 return 0.003, 1
@@ -42,16 +47,14 @@ def inputTerrain():
                 return 0.3, 5
             elif int(userInput) == 4:
                 return 1, 10
-        print("Value entered is not an integer between 0 and 4")
-
-inputTerrain()
+        print("Value entered is not an integer between 0 and 4. Try Again")
 # %%
 #Ask for input
-z = inputNumber("Enter the height above ground 'z' in metres:")
-z_s = inputNumber("Reference Height for determining structural factor 'z_s' in metres:")
-b = inputNumber("Length of Beam perpendicular to the wind 'b' in metres:")
-h = inputNumber("Height of beam 'h' in metres:")
-n = inputNumber("Natural Frequency of TODO: DET VERT/HORIZ bending frequency 'n' in Hz)
+z = inputNumber("Enter the height above ground 'z' in metres : ")
+z_s = inputNumber("Reference Height for determining structural factor 'z_s' in metres : ")
+b = inputNumber("Length of Beam perpendicular to the wind 'b' in metres : ")
+h = inputNumber("Height of beam 'h' in metres : ")
+n = inputNumber("Natural Frequency of TODO: DET VERT/HORIZ bending frequency 'n' in Hz : ")
 z0, zmin = inputTerrain()
 #%%
 '''Sec 4.4 Iv(z) The turbulence intensity at height z is 
