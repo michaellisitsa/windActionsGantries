@@ -20,6 +20,15 @@ def inputNumber(message):
 
 # %%
 def inputTerrain():
+    '''Input Terrain Category, validate its input and return z0 and zmin
+
+    Parameters:
+    None
+
+    Returns (in this order):
+    z0: Returning Value
+    zmin: Returning Value
+    '''
     while True:
         userInput = input("Terrain Category as per Table 4.1 (0 to 4):")
         if userInput.isdigit() and 0 <= int(userInput) <= 4:
@@ -45,4 +54,8 @@ h = inputNumber("Height of beam 'h' in metres:")
 n = inputNumber("Natural Frequency of TODO: DET VERT/HORIZ bending frequency 'n' in Hz)
 z0, zmin = inputTerrain()
 #%%
-
+'''Sec 4.4 Iv(z) The turbulence intensity at height z is 
+defined as the Standard Deviation of the turbulence divided 
+by the wind velocity
+Assumptions:
+kl = 1.0 : Sec 4.4(1)'''
