@@ -82,9 +82,9 @@ z_s = inputNumber("Reference Height for determining structural factor 'z_s' in m
 b = inputNumber("Length of Beam perpendicular to the wind 'b' in metres : ")
 h = inputNumber("Height of beam 'h' in metres : ")
 n = inputNumber("Natural Frequency of TODO: DET VERT/HORIZ bending frequency 'n' in Hz : ")
-vb = inputNumber("Basic Wind speed 'vb' in m/s: ")
+vb = inputNumber("Mean Wind speed 10 min ave [refer Durst Curve for conversion from 3s] 'vb' in m/s: ")
 z0, zmin = inputTerrain()
-mass = inputNumber("Enter the mass per unit area of beam at the mid-span 'mass' in kg/m : ")
+mass = inputNumber("Enter the mass per unit metre of beam at the mid-span 'mass' in kg/m : ")
 cf = inputNumber("Aerodynamic shape factor 'cf' : ")
 delta_s = inputConnecType()
 
@@ -119,7 +119,7 @@ SL = 6.8 * fL/(1 + 10.2 * fL)**(5/3)
 # F.5 Logarithmic decrement of damping
 delta_d = 0 #Assumed no special damping devices
 dens_air = 1.25 #(kg/m3)
-delta_a = cf * dens_air * vm / (2 * n * mass)
+delta_a = cf * dens_air * vm / (2 * n * mass/h)
 delta = delta_s + delta_a + delta_d
 
 # %%
@@ -140,3 +140,4 @@ print(f'The structural factor is:\n'
 f'cs_cd = {cs_cd:3.2f}:\n'
 f'cs = {cs:7.2f}\n'
 f'cd = {cd:7.2f}')
+input("Press any key to exit")
