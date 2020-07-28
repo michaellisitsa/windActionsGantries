@@ -75,6 +75,16 @@ def inputConnecType():
                 return inputNumber("Please enter a structural damping factor [0 to 0.15 typ] : ")
         print("Value entered is not an integer between 1 and 3. Try Again")
 
+def inputPrintYesNo(message,string):
+    '''Input y [yes] or n [no] and if yes, print out intermediate values in calculation'''
+    while True:
+        userInput = input(message)
+        if userInput == "y":
+            return string
+        elif userInput == "n":
+            return None
+        print("Value entered is not \"y\" or \"n\". Try Again")
+
 # %%
 #Ask for input
 z = inputNumber("Enter the height above ground 'z' in metres : ")
@@ -140,4 +150,37 @@ print(f'The structural factor is:\n'
 f'cs_cd = {cs_cd:3.2f}:\n'
 f'cs = {cs:7.2f}\n'
 f'cd = {cd:7.2f}')
-input("Press any key to exit")
+
+
+#%%
+#Add option to view all intermediate results
+print(inputPrintYesNo("Do you want to see the intermediate steps: ",
+f'TURBULENCE, SPECTRAL FUNC & DAMPING\n\
+kr={kr:10.2f}\n\
+cr={cr:10.2f}\n\
+vm={vm:10.2f}\n\
+Iv={Iv:10.2f}\n\
+alpha={alpha:7.2f}\n\
+L={L:11.2f}\n\
+fL={fL:10.2f}\n\
+SL={SL:10.2f}\n\
+delta_s={delta_s:5.2f}\n\
+delta_a={delta_a:5.2f}\n\n\
+STRUCTURAL FACTORS INPUTS:\n\
+B2={B2:10.2f}\n\
+nh={nh:10.2f}\n\
+nb={nb:10.2f}\n\
+Rh={Rh:10.2f}\n\
+Rb={Rb:10.2f}\n\
+R2={R2:10.2f}\n\
+v={v:11.2f}\n\
+T={T:11.2f}\n\
+kp={kp:10.2f}\n\n\
+STRUCTURAL FACTORS:\n\
+cs={cs:10.2f}\n\
+cd={cd:10.2f}\n\
+cs_cd={cs_cd:7.2f}\n\
+'))
+
+# %%
+input("Press Any Key to Exit!")
