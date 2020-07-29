@@ -1,5 +1,6 @@
 #%%
 import math
+import inspect
 
 #%%
 def inputNumber(message):
@@ -156,39 +157,42 @@ class wind_calcs:
         f'cs = {cs:7.2f}\n'
         f'cd = {cd:7.2f}')
 
+        # Store intermediate results in instance
+        print(inputPrintYesNo("Do you want to see the intermediate values? y = [YES] n = [NO]: ",
+        f'TURBULENCE, SPECTRAL FUNC & DAMPING\n\
+        kr={kr:10.2f}\n\
+        cr={cr:10.2f}\n\
+        vm={vm:10.2f}\n\
+        Iv={Iv:10.2f}\n\
+        alpha={alpha:7.2f}\n\
+        L={L:11.2f}\n\
+        fL={fL:10.2f}\n\
+        SL={SL:10.2f}\n\
+        delta_s={delta_s:5.2f}\n\
+        delta_a={delta_a:5.2f}\n\n\
+        STRUCTURAL FACTORS INPUTS:\n\
+        B2={B2:10.2f}\n\
+        nh={nh:10.2f}\n\
+        nb={nb:10.2f}\n\
+        Rh={Rh:10.2f}\n\
+        Rb={Rb:10.2f}\n\
+        R2={R2:10.2f}\n\
+        v={v:11.2f}\n\
+        T={T:11.2f}\n\
+        kp={kp:10.2f}\n\n\
+        STRUCTURAL FACTORS:\n\
+        cs={cs:10.2f}\n\
+        cd={cd:10.2f}\n\
+        cs_cd={cs_cd:7.2f}\n\
+        '))
 
 func = wind_calcs(z,b,h,n,vb,cf)
 func.cd_cs(z_s,z0,zmin,delta_s,mass)
 
 #%%
-#Add option to view all intermediate results
-print(inputPrintYesNo("Do you want to see the intermediate steps: ",
-f'TURBULENCE, SPECTRAL FUNC & DAMPING\n\
-kr={kr:10.2f}\n\
-cr={cr:10.2f}\n\
-vm={vm:10.2f}\n\
-Iv={Iv:10.2f}\n\
-alpha={alpha:7.2f}\n\
-L={L:11.2f}\n\
-fL={fL:10.2f}\n\
-SL={SL:10.2f}\n\
-delta_s={delta_s:5.2f}\n\
-delta_a={delta_a:5.2f}\n\n\
-STRUCTURAL FACTORS INPUTS:\n\
-B2={B2:10.2f}\n\
-nh={nh:10.2f}\n\
-nb={nb:10.2f}\n\
-Rh={Rh:10.2f}\n\
-Rb={Rb:10.2f}\n\
-R2={R2:10.2f}\n\
-v={v:11.2f}\n\
-T={T:11.2f}\n\
-kp={kp:10.2f}\n\n\
-STRUCTURAL FACTORS:\n\
-cs={cs:10.2f}\n\
-cd={cd:10.2f}\n\
-cs_cd={cs_cd:7.2f}\n\
-'))
+#Add option to view source
+print(inputPrintYesNo("Do you want to see the calculation steps? y = [YES] n = [NO]: ",
+inspect.getsource(func.cd_cs)[0:-980]))
 
 # %%
 input("Press Any Key to Exit!")
