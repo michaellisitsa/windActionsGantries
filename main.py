@@ -146,29 +146,6 @@ def inputDampingAS():
         print("Value entered is not an integer between 1 and 7. Try Again")
 
 # %%
-#Ask for input General
-z = inputNumber("Enter the height above ground 'z' in metres : ")
-b = inputNumber("Length of Beam perpendicular to the wind 'b' in metres : ")
-h = inputNumber("Height of beam 'h' in metres : ")
-
-#%%
-n = inputNumber("Natural Frequency of TODO: DET VERT/HORIZ bending frequency 'n' in Hz : ")
-vb = inputNumber("Mean Wind speed 10 min ave [refer Durst Curve for conversion from 3s] 'vb' in m/s: ")
-cf = inputNumber("Aerodynamic shape factor 'cf' : ")
-
-#Ask for input cd_cs calculation
-z_s = inputNumber("Reference Height for determining structural factor 'z_s' in metres : ")
-z0, zmin = inputTerrain()
-mass = inputNumber("Enter the mass per unit metre of beam at the mid-span 'mass' in kg/m : ")
-delta_s = inputConnecType()
-#%%
-#Ask for input Cdyn calculation:
-Ih = inputTerrainIh(z)
-bsh = inputNumber("What is the average breadth of the cantilever structure 'bsh' and 'b0h' in metres : ")
-Vdes = inputNumber("What is the wind gust speed for a 0.2s interval as per AS1170.2 Cl 2.3 in m/s : ")
-delta2 = inputDampingAS()
-
-# %%
 class wind_calcs:
     def __init__(self,z,b,h,n,vb,cf):
         self.z = z
@@ -257,10 +234,10 @@ class wind_calcs:
 
     def Cdyntower(self,Ih,bsh,Vdes,delta2):
         # Convert values from EN terminology to AS1170
-        s = 0.6 * z
-        h2 = z
+        s = self.z
+        h2 = self.z
         gv = 3.4
-        na = n
+        na = self.n
 
         #Background Factor Eq 6.2(2)
         Lh = 85 * (h2 / 10)**0.25
@@ -268,7 +245,7 @@ class wind_calcs:
 
         #Height and Peak Factors for the response
         Hs = 1 + (s / h2)**2
-        gR = math.sqrt(1.2 + 2 * math.log(600 * n))
+        gR = math.sqrt(1.2 + 2 * math.log(600 * na))
 
         #Size Reduction Factor Eq6.2(5)
         N = na * Lh * (1 + gv * Ih) / Vdes
@@ -280,15 +257,40 @@ class wind_calcs:
 
         print(f'The Cdyn Dynamic factor is:\n'
         f'Cdyn = {Cdyn:9.2f}')
-
-func = wind_calcs(z,b,h,n,vb,cf)
-func.cd_cs(z_s,z0,zmin,delta_s,mass)
-func.Cdyntower(Ih,bsh,Vdes,delta2)
+        
+        # Store intermediate results in instance
+        print(inputPrintYesNo("Do you want to see the intermediate values? y = [YES] n = [NO]: ",
+        f's={s:11.2f}\n\
+        gv={gv:10.2f}\n\
+        n={na:11.2f}\n\
+        Lh={Lh:10.2f}\n\
+        Bs={Bs:10.2f}\n\
+        Hs={Hs:10.2f}\n\
+        gR={gR:10.2f}\n\
+        N={N:11.2f}\n\
+        S={S:11.2f}\n\
+        Et={Et:10.2f}\n'))
 
 #%%
-#Add option to view source
-print(inputPrintYesNo("Do you want to see the calculation steps? y = [YES] n = [NO]: ",
-inspect.getsource(func.cd_cs)[0:-980]))
+func = wind_calcs(z := inputNumber("Enter the height above ground 'z' in metres : "),
+                inputNumber("Length of Beam perpendicular to the wind 'b' in metres : "),
+                inputNumber("Height of beam 'h' in metres : "),
+                inputNumber("Natural Frequency of TODO: DET VERT/HORIZ bending frequency 'n' in Hz : "),
+                inputNumber("Mean Wind speed 10 min ave [refer Durst Curve for conversion from 3s] 'vb' in m/s: "),
+                inputNumber("Aerodynamic shape factor 'cf' : "))
+
+if inputPrintYesNo("Conduct cd_cs calculation AnnB EN1991.1.4 y = [YES] n = [NO] : ",True):
+    func.cd_cs(inputNumber("Reference Height for determining structural factor 'z_s' in metres : "),
+            inputTerrain()[0],
+            inputTerrain()[1],
+            inputConnecType(),
+            inputNumber("Enter the mass per unit metre of beam at the mid-span 'mass' in kg/m : "))
+
+if inputPrintYesNo("Conduct Cdyn calculation Sec6 AS1170.2 y = [YES] n = [NO] : ",True):
+    func.Cdyntower(inputTerrainIh(z),
+            inputNumber("What is the average breadth of the cantilever structure 'bsh' and 'b0h' in metres : "),
+            inputNumber("What is the wind gust speed for a 0.2s interval as per AS1170.2 Cl 2.3 in m/s : "),
+            inputDampingAS())
 
 # %%
 input("Press Any Key to Exit!")
