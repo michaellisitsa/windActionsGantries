@@ -1,6 +1,7 @@
 #%%
 import math
 import inspect
+import numpy as np
 
 #%%
 def inputNumber(message):
@@ -53,6 +54,33 @@ def inputTerrain():
                 return 1, 10
         print("Value entered is not an integer between 0 and 4. Try Again")
 
+def inputTerrainIh(z):
+    '''Input Terrain Category, validate its input and output an interpolated graph for Turbulence intensity
+
+    Parameters:
+    None
+
+    Returns (in this order):
+    Iz: Returning Value
+    '''
+    while True:
+        h_vals = np.array([0.,5.,10.,15.,20.,30.,40.,50.,75.,100.,150.,200.])
+        intensity = np.array([[.165,.165,.157,.152,.147,.140,.133,.128,.118,.108,.095,.085],
+                            [.196,.196,.183,.176,.171,.162,.156,.151,.140,.131,.117,.107],
+                            [.271,.271,.239,.225,.215,.203,.195,.188,.176,.166,.150,.139],
+                            [.342,.342,.342,.342,.342,.305,.285,.270,.248,.233,.210,.196]])
+        userInput = input("Terrain Category as per Table 6.1 (1 to 4) : ")
+        if userInput.isdigit() and 1 <= int(userInput) <= 4:
+            if int(userInput) == 1:
+                return np.interp(z,h_vals,intensity[0])
+            elif int(userInput) == 2:
+                return np.interp(z,h_vals,intensity[1])
+            elif int(userInput) == 3:
+                return np.interp(z,h_vals,intensity[2])
+            elif int(userInput) == 4:
+                return np.interp(z,h_vals,intensity[3])
+        print("Value entered is not an integer between 1 and 4. Try Again")
+
 def inputConnecType():
     '''Input Connection Type, validate its input and return Damping Factor delta_s
 
@@ -86,18 +114,59 @@ def inputPrintYesNo(message,string):
             return None
         print("Value entered is not \"y\" or \"n\". Try Again")
 
+def inputDampingAS():
+    '''Input ULS/SLS and type of structure, validate its input and return Damping Factor delta2
+
+    Parameters:
+    None
+
+    Returns (in this order):
+    delta_2 : Logarithmic decrement of structural damping in the fundamental mode
+    '''
+    while True:
+        userInput = input("Input structural type and case for damping calculations AS1170 Cl6.2.2\n\
+            1=[steel ULS] 2=[steel SLS deflection] 3=[steel SLS acceleration]\n\
+                4=[concrete ULS] 5=[concrete SLS deflection] 6=[concrete SLS acceleration]\n\
+                7=[Enter number...] : ")
+        if userInput.isdigit() and 1 <= int(userInput) <= 7:
+            if int(userInput) == 1:
+                return 0.02
+            elif int(userInput) == 2:
+                return 0.012
+            elif int(userInput) == 3:
+                return 0.01
+            elif int(userInput) == 4:
+                return 0.03
+            elif int(userInput) == 5:
+                return 0.015
+            elif int(userInput) == 6:
+                return 0.01
+            elif int(userInput) == 7:
+                return inputNumber("Please enter a structural damping factor [0 to 0.3 typ] : ")
+        print("Value entered is not an integer between 1 and 7. Try Again")
+
 # %%
-#Ask for input
+#Ask for input General
 z = inputNumber("Enter the height above ground 'z' in metres : ")
-z_s = inputNumber("Reference Height for determining structural factor 'z_s' in metres : ")
 b = inputNumber("Length of Beam perpendicular to the wind 'b' in metres : ")
 h = inputNumber("Height of beam 'h' in metres : ")
+
+#%%
 n = inputNumber("Natural Frequency of TODO: DET VERT/HORIZ bending frequency 'n' in Hz : ")
 vb = inputNumber("Mean Wind speed 10 min ave [refer Durst Curve for conversion from 3s] 'vb' in m/s: ")
+cf = inputNumber("Aerodynamic shape factor 'cf' : ")
+
+#Ask for input cd_cs calculation
+z_s = inputNumber("Reference Height for determining structural factor 'z_s' in metres : ")
 z0, zmin = inputTerrain()
 mass = inputNumber("Enter the mass per unit metre of beam at the mid-span 'mass' in kg/m : ")
-cf = inputNumber("Aerodynamic shape factor 'cf' : ")
 delta_s = inputConnecType()
+#%%
+#Ask for input Cdyn calculation:
+Ih = inputTerrainIh(z)
+bsh = inputNumber("What is the average breadth of the cantilever structure 'bsh' and 'b0h' in metres : ")
+Vdes = inputNumber("What is the wind gust speed for a 0.2s interval as per AS1170.2 Cl 2.3 in m/s : ")
+delta2 = inputDampingAS()
 
 # %%
 class wind_calcs:
@@ -186,8 +255,35 @@ class wind_calcs:
         cs_cd={cs_cd:7.2f}\n\
         '))
 
+    def Cdyntower(self,Ih,bsh,Vdes,delta2):
+        # Convert values from EN terminology to AS1170
+        s = 0.6 * z
+        h2 = z
+        gv = 3.4
+        na = n
+
+        #Background Factor Eq 6.2(2)
+        Lh = 85 * (h2 / 10)**0.25
+        Bs = 1 / (1 + math.sqrt(0.26 * (h2 - s)**2 + 0.46 * bsh**2) / Lh)
+
+        #Height and Peak Factors for the response
+        Hs = 1 + (s / h2)**2
+        gR = math.sqrt(1.2 + 2 * math.log(600 * n))
+
+        #Size Reduction Factor Eq6.2(5)
+        N = na * Lh * (1 + gv * Ih) / Vdes
+        S = 1 / ((1 + 3.5 * na * h2 * (1 + gv * Ih) / Vdes) * (1 + 4 * na * bsh * (1 + gv * Ih) / Vdes))
+
+        #Dynamic Factor
+        Et = math.pi * N / (1 + 70.8 * N**2)**(5 / 6)
+        Cdyn = (1 + 2 * Ih * math.sqrt(gv**2 * Bs + Hs * gR**2 * S * Et / delta2)) / (1 + 2 * gv * Ih)
+
+        print(f'The Cdyn Dynamic factor is:\n'
+        f'Cdyn = {Cdyn:9.2f}')
+
 func = wind_calcs(z,b,h,n,vb,cf)
 func.cd_cs(z_s,z0,zmin,delta_s,mass)
+func.Cdyntower(Ih,bsh,Vdes,delta2)
 
 #%%
 #Add option to view source
