@@ -1,7 +1,6 @@
 #%%
 import math
-import inspect
-import numpy as np
+from bisect import bisect_right
 
 #%%
 def inputNumber(message):
@@ -64,21 +63,25 @@ def inputTerrainIh(z):
     Iz: Returning Value
     '''
     while True:
-        h_vals = np.array([0.,5.,10.,15.,20.,30.,40.,50.,75.,100.,150.,200.])
-        intensity = np.array([[.165,.165,.157,.152,.147,.140,.133,.128,.118,.108,.095,.085],
+        h_vals = [0.,5.,10.,15.,20.,30.,40.,50.,75.,100.,150.,200.]
+        intensity = [[.165,.165,.157,.152,.147,.140,.133,.128,.118,.108,.095,.085],
                             [.196,.196,.183,.176,.171,.162,.156,.151,.140,.131,.117,.107],
                             [.271,.271,.239,.225,.215,.203,.195,.188,.176,.166,.150,.139],
-                            [.342,.342,.342,.342,.342,.305,.285,.270,.248,.233,.210,.196]])
+                            [.342,.342,.342,.342,.342,.305,.285,.270,.248,.233,.210,.196]]
         userInput = input("Terrain Category as per Table 6.1 (1 to 4) : ")
         if userInput.isdigit() and 1 <= int(userInput) <= 4:
             if int(userInput) == 1:
-                return np.interp(z,h_vals,intensity[0])
+                interp = Interpolate(h_vals,intensity[0])
+                return interp(z)
             elif int(userInput) == 2:
-                return np.interp(z,h_vals,intensity[1])
+                interp = Interpolate(h_vals,intensity[1])
+                return interp(z)
             elif int(userInput) == 3:
-                return np.interp(z,h_vals,intensity[2])
+                interp = Interpolate(h_vals,intensity[2])
+                return interp(z)
             elif int(userInput) == 4:
-                return np.interp(z,h_vals,intensity[3])
+                interp = Interpolate(h_vals,intensity[3])
+                return interp(z)
         print("Value entered is not an integer between 1 and 4. Try Again")
 
 def inputConnecType():
@@ -144,6 +147,24 @@ def inputDampingAS():
             elif int(userInput) == 7:
                 return inputNumber("Please enter a structural damping factor [0 to 0.3 typ] : ")
         print("Value entered is not an integer between 1 and 7. Try Again")
+
+#Linear interpolation function to get value at a point given a set of x and y points
+class Interpolate:
+    def __init__(self, x_list, y_list):
+        if any(y - x <= 0 for x, y in zip(x_list, x_list[1:])):
+            raise ValueError("x_list must be in strictly ascending order!")
+        self.x_list = x_list
+        self.y_list = y_list
+        intervals = zip(x_list, x_list[1:], y_list, y_list[1:])
+        self.slopes = [(y2 - y1) / (x2 - x1) for x1, x2, y1, y2 in intervals]
+
+    def __call__(self, x):
+        if not (self.x_list[0] <= x <= self.x_list[-1]):
+            raise ValueError("x out of bounds!")
+        if x == self.x_list[-1]:
+            return self.y_list[-1]
+        i = bisect_right(self.x_list, x) - 1
+        return self.y_list[i] + self.slopes[i] * (x - self.x_list[i])
 
 # %%
 class wind_calcs:
@@ -260,16 +281,18 @@ class wind_calcs:
         
         # Store intermediate results in instance
         print(inputPrintYesNo("Do you want to see the intermediate values? y = [YES] n = [NO]: ",
-        f's={s:11.2f}\n\
-        gv={gv:10.2f}\n\
-        n={na:11.2f}\n\
-        Lh={Lh:10.2f}\n\
-        Bs={Bs:10.2f}\n\
-        Hs={Hs:10.2f}\n\
-        gR={gR:10.2f}\n\
-        N={N:11.2f}\n\
-        S={S:11.2f}\n\
-        Et={Et:10.2f}\n'))
+        f'Ih={Ih:10.2f}\n\
+delta2={delta2:6.2f}\n\
+s={s:11.2f}\n\
+gv={gv:10.2f}\n\
+n={na:11.2f}\n\
+Lh={Lh:10.2f}\n\
+Bs={Bs:10.2f}\n\
+Hs={Hs:10.2f}\n\
+gR={gR:10.2f}\n\
+N={N:11.2f}\n\
+S={S:11.2f}\n\
+Et={Et:10.2f}\n'))
 
 #%%
 func = wind_calcs(z := inputNumber("Enter the height above ground 'z' in metres : "),
