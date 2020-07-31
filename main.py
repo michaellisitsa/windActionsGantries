@@ -300,7 +300,7 @@ class wind_calcs:
         #Max displacement over time of the point with phi_iy = 1
         Yfmax = b * (1 / St**2) * (1 / Sc) * K * Kw * clat #E.7
 
-        print("The maximum displacement over time of a point with phi_iy = 1 is:\n\
+        print(f"The maximum displacement over time of a point with phi_iy = 1 is:\n\
 Yfmax={Yfmax:0.3f} m")
 
         # Ask user whether intermediate results are required:
@@ -312,7 +312,7 @@ vm={self.vm:10.2f}\n\
 St={St:10.2f}\n\
 vcrit={vcrit:7.2f}\n\
 Sc={Sc:10.2f}\n\
-Re={Re:10.2f}\n\
+Re={Re:10.0f}\n\
 K={K:11.2f}\n\
 clat0={clat0:7.2f}\n\
 clat={clat:8.2f}\n\
