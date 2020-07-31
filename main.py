@@ -166,6 +166,8 @@ class Interpolate:
         i = bisect_right(self.x_list, x) - 1
         return self.y_list[i] + self.slopes[i] * (x - self.x_list[i])
 
+
+
 # %%
 class wind_calcs:
     def __init__(self,z,b,h,n,vb,cf):
@@ -175,6 +177,7 @@ class wind_calcs:
         self.n = n
         self.vb = vb
         self.cf = cf
+        self.ro = 1.25 #kg/m3 air density
 
     def cd_cs(self,z_s,z0,zmin,delta_s,mass):
         # Mean Wind
@@ -252,6 +255,7 @@ class wind_calcs:
         cd={cd:10.2f}\n\
         cs_cd={cs_cd:7.2f}\n\
         '))
+        return True
 
     def Cdyntower(self,Ih,bsh,Vdes,delta2):
         # Convert values from EN terminology to AS1170
@@ -293,6 +297,25 @@ gR={gR:10.2f}\n\
 N={N:11.2f}\n\
 S={S:11.2f}\n\
 Et={Et:10.2f}\n'))
+        return True
+
+    def Vortex(self,d,delta_s, mass):
+        b = self.h
+        #Read Graph of Strouhal Number Table E.1 EN1991.1.4
+        db_vals = [0,1,2,3,4,5,10]
+        St_vals = [.12,.12,.06,.06,.15,.11,.09]
+        interp = Interpolate(db_vals,St_vals)
+        St = interp(d/b)
+        print(St)
+
+        #Critical Wind Velocity vcrit,i
+        Vcrit = b * self.n / St
+        print(Vcrit)
+
+        #Scruton Number
+        Sc = 2 * delta_s * mass / (self.ro * b**2)
+        print(Sc)
+        return True
 
 #%%
 func = wind_calcs(z := inputNumber("Enter the height above ground 'z' in metres : "),
@@ -302,18 +325,37 @@ func = wind_calcs(z := inputNumber("Enter the height above ground 'z' in metres 
                 inputNumber("Mean Wind speed 10 min ave [refer Durst Curve for conversion from 3s] 'vb' in m/s: "),
                 inputNumber("Aerodynamic shape factor 'cf' : "))
 
+#Assign false to all functions yet to be called.
+cd_cs_called = False
+Cdyntower_called = False
+Vortex_called = False
+
 if inputPrintYesNo("Conduct cd_cs calculation AnnB EN1991.1.4 y = [YES] n = [NO] : ",True):
-    func.cd_cs(inputNumber("Reference Height for determining structural factor 'z_s' in metres : "),
+    cd_cs_called = func.cd_cs(inputNumber("Reference Height for determining structural factor 'z_s' in metres : "),
             inputTerrain()[0],
             inputTerrain()[1],
-            inputConnecType(),
-            inputNumber("Enter the mass per unit metre of beam at the mid-span 'mass' in kg/m : "))
+            delta_s := inputConnecType(),
+            mass := inputNumber("Enter the mass per unit metre of beam at the mid-span 'mass' in kg/m : "))
 
 if inputPrintYesNo("Conduct Cdyn calculation Sec6 AS1170.2 y = [YES] n = [NO] : ",True):
-    func.Cdyntower(inputTerrainIh(z),
+    Cdyntower_called = func.Cdyntower(inputTerrainIh(z),
             inputNumber("What is the average breadth of the cantilever structure 'bsh' and 'b0h' in metres : "),
             inputNumber("What is the wind gust speed for a 0.2s interval as per AS1170.2 Cl 2.3 in m/s : "),
             inputDampingAS())
+            
+if cd_cs_called:
+    if inputPrintYesNo("Conduct Vortex Shedding Calculation as per EN1991.1.4 y = [YES] n = [NO] : ",True):
+        func.Vortex(
+                inputNumber("Horizontal width of section 'd' in metres : "),
+                delta_s,
+                mass)
+else:
+    if inputPrintYesNo("Conduct Vortex Shedding Calculation as per EN1991.1.4 y = [YES] n = [NO] : ",True):
+        func.Vortex(
+                inputNumber("Horizontal width of section 'd' in metres : "),
+                inputConnecType(),
+                inputNumber("Enter the mass per unit metre of beam at the mid-span 'mass' in kg/m : "))
+                
 
 # %%
 input("Press Any Key to Exit!")
