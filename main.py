@@ -25,7 +25,6 @@ def inputNumber(message):
             continue
         else:
             return userInput
-            break
 
 # %%
 def inputTerrain():
@@ -179,34 +178,41 @@ class wind_calcs:
         self.cf = cf
         self.ro = 1.25 #kg/m3 air density
 
-    def cd_cs(self,z_s,z0,zmin,delta_s,mass):
-        # Mean Wind
-        c0 = 1.0 # Sec 4.3.3 assumed, as upwind slope typically < 3 degrees
+    def EN1991(self,z0,zmin,delta_s,mass):
+        self.z0 = z0
+        self.zmin = zmin
+        self.delta_s = delta_s
+        self.mass = mass
+
+        #Mean Wind Speed
+        self.c0 = 1 # Sec 4.3.3 assumed, as upwind slope typically < 3 degrees
         z0ii = 0.05 #Sec 4.3.2
-        kr = 0.19 * (z0 / z0ii)**0.07 # Eq 4.5
-        cr = kr * math.log(max(zmin, self.z) / z0) #Cl 4.3.1 Terrain Roughness
-        vm = cr * c0 * self.vb #Eq 4.3
+        self.kr = 0.19 * (z0 / z0ii)**0.07 # Eq 4.5
+        self.cr = self.kr * math.log(max(zmin, self.z) / z0) #Cl 4.3.1 Terrain Roughness
+        self.vm = self.cr * self.c0 * self.vb #Eq 4.3
+
+    def cd_cs(self,z_s):
 
         #Sec 4.4 Iv(z) The turbulence intensity at height z is 
         #defined as the Standard Deviation of the turbulence divided 
         #by the wind velocity
         kl = 1.0 # Sec 4.4(1) assumed
-        Iv = kl / (c0 * math.log(self.z / z0))
+        Iv = kl / (self.c0 * math.log(self.z / self.z0))
 
         #Sec B.1 (1) Wind Turbulence
         zt = 200 #(m) Reference Height
         Lt = 300 #(m) Reference Length
-        alpha = 0.67 + 0.05 * math.log(z0)
-        L = Lt * (max(zmin, self.z)/ zt)**alpha
+        alpha = 0.67 + 0.05 * math.log(self.z0)
+        L = Lt * (max(self.zmin, self.z)/ zt)**alpha
 
         #Sec B.1 (2) Wind Distribution over frequencies - Power spectral function
-        fL = self.n*L/vm
+        fL = self.n*L/self.vm
         SL = 6.8 * fL/(1 + 10.2 * fL)**(5/3)
 
         # F.5 Logarithmic decrement of damping
         delta_d = 0 #Assumed no special damping devices
         dens_air = 1.25 #(kg/m3)
-        delta_a = self.cf * dens_air * vm / (2 * self.n * mass/self.h)
+        delta_a = self.cf * dens_air * self.vm / (2 * self.n * self.mass/self.h)
         delta = delta_s + delta_a + delta_d
 
         # B.2 Structural Factors
@@ -227,18 +233,18 @@ class wind_calcs:
         f'cs = {cs:7.2f}\n'
         f'cd = {cd:7.2f}')
 
-        # Store intermediate results in instance
+        # Ask user whether intermediate results are required:
         print(inputPrintYesNo("Do you want to see the intermediate values? y = [YES] n = [NO]: ",
         f'TURBULENCE, SPECTRAL FUNC & DAMPING\n\
-        kr={kr:10.2f}\n\
-        cr={cr:10.2f}\n\
-        vm={vm:10.2f}\n\
+        kr={self.kr:10.2f}\n\
+        cr={self.cr:10.2f}\n\
+        vm={self.vm:10.2f}\n\
         Iv={Iv:10.2f}\n\
         alpha={alpha:7.2f}\n\
         L={L:11.2f}\n\
         fL={fL:10.2f}\n\
         SL={SL:10.2f}\n\
-        delta_s={delta_s:5.2f}\n\
+        delta_s={self.delta_s:5.2f}\n\
         delta_a={delta_a:5.2f}\n\n\
         STRUCTURAL FACTORS INPUTS:\n\
         B2={B2:10.2f}\n\
@@ -255,7 +261,64 @@ class wind_calcs:
         cd={cd:10.2f}\n\
         cs_cd={cs_cd:7.2f}\n\
         '))
-        return True
+
+    def Vortex(self,d):
+        b = self.h #height of beam variable definition
+        l = self.b #Length of beam variable redefinition
+        #Read Graph of Strouhal Number Table E.1 EN1991.1.4
+        db_vals = [0,1,2,3,4,5,10]
+        St_vals = [.12,.12,.06,.06,.15,.11,.09]
+        interp = Interpolate(db_vals,St_vals)
+        St = interp(d/b)
+
+        #Critical Wind Velocity vcrit,i
+        vcrit = b * self.n / St
+
+        #Scruton Number [Ratio structural mass to fluid mass]
+        Sc = 2 * self.delta_s * self.mass / (self.ro * b**2)
+
+        #Reynolds Number
+        v = 15 * 10**-6 #m2/s kinematic velocity of air
+        Re = b * vcrit / v
+
+        #Vortex Shedding Action
+        #APPROACH 1
+        K = 0.1 #Table E.5 for simply supported structure
+        #Correlation Length E 1.5.2.3
+        #clat Calculations Table E.2 & E.3
+        clat0 = 1.1
+        if vcrit_ratio := vcrit/self.vm <= 0.83:
+            clat = clat0
+        elif vcrit_ratio <= 1.25:
+            clat = (3 - 2.4 * vcrit_ratio) * clat0
+        else:
+            clat = 0
+
+        Lj = self.b #TODO CHECK CORRECTNESS
+        lamda = l / b
+        Kw = min(math.cos(math.pi / 2 * (1 - (Lj / b) / lamda)),0.6)
+        #Max displacement over time of the point with phi_iy = 1
+        Yfmax = b * (1 / St**2) * (1 / Sc) * K * Kw * clat #E.7
+
+        print("The maximum displacement over time of a point with phi_iy = 1 is:\n\
+Yfmax={Yfmax:0.3f} m")
+
+        # Ask user whether intermediate results are required:
+        print(inputPrintYesNo("Do you want to see the intermediate values? y = [YES] n = [NO]: ",
+        f'delta_s={self.delta_s:5.2f}\n\
+kr={self.kr:10.2f}\n\
+cr={self.cr:10.2f}\n\
+vm={self.vm:10.2f}\n\
+St={St:10.2f}\n\
+vcrit={vcrit:7.2f}\n\
+Sc={Sc:10.2f}\n\
+Re={Re:10.2f}\n\
+K={K:11.2f}\n\
+clat0={clat0:7.2f}\n\
+clat={clat:8.2f}\n\
+Lj={Lj:10.2f}\n\
+lamda={lamda:7.2f}\n\
+Kw={Kw:10.2f}'))
 
     def Cdyntower(self,Ih,bsh,Vdes,delta2):
         # Convert values from EN terminology to AS1170
@@ -283,7 +346,7 @@ class wind_calcs:
         print(f'The Cdyn Dynamic factor is:\n'
         f'Cdyn = {Cdyn:9.2f}')
         
-        # Store intermediate results in instance
+        # Ask user whether intermediate results are required:
         print(inputPrintYesNo("Do you want to see the intermediate values? y = [YES] n = [NO]: ",
         f'Ih={Ih:10.2f}\n\
 delta2={delta2:6.2f}\n\
@@ -297,73 +360,34 @@ gR={gR:10.2f}\n\
 N={N:11.2f}\n\
 S={S:11.2f}\n\
 Et={Et:10.2f}\n'))
-        return True
-
-    def Vortex(self,d,delta_s, mass):
-        b = self.h
-        #Read Graph of Strouhal Number Table E.1 EN1991.1.4
-        db_vals = [0,1,2,3,4,5,10]
-        St_vals = [.12,.12,.06,.06,.15,.11,.09]
-        interp = Interpolate(db_vals,St_vals)
-        St = interp(d/b)
-        print(St)
-
-        #Critical Wind Velocity vcrit,i
-        vcrit = b * self.n / St
-        print(vcrit)
-
-        #Scruton Number
-        Sc = 2 * delta_s * mass / (self.ro * b**2)
-        print(Sc)
-        return True
-
-        #Reynolds Number
-        v = 15 * 10**-6 #m2/s kinematic velocity of air
-        Re = b * vcrit / v
-        print(Re)
-
-        #Vortex Shedding Action
-        #TODO
 
 #%%
 func = wind_calcs(z := inputNumber("Enter the height above ground 'z' in metres : "),
                 inputNumber("Length of Beam perpendicular to the wind 'b' in metres : "),
                 inputNumber("Height of beam 'h' in metres : "),
-                inputNumber("Natural Frequency of TODO: DET VERT/HORIZ bending frequency 'n' in Hz : "),
+                inputNumber("Natural Frequency 'n' in Hz : "),
                 inputNumber("Mean Wind speed 10 min ave [refer Durst Curve for conversion from 3s] 'vb' in m/s: "),
                 inputNumber("Aerodynamic shape factor 'cf' : "))
 
-#Assign false to all functions yet to be called.
-cd_cs_called = False
-Cdyntower_called = False
-Vortex_called = False
-
-if inputPrintYesNo("\nConduct cd_cs calculation AnnB EN1991.1.4 y = [YES] n = [NO] : ",True):
-    cd_cs_called = func.cd_cs(inputNumber("Reference Height for determining structural factor 'z_s' in metres : "),
-            inputTerrain()[0],
+if inputPrintYesNo("\nConduct EN1991.1.4 calculations y = [Yes] n = [No] : ",True):
+    func.EN1991(inputTerrain()[0],
             inputTerrain()[1],
             delta_s := inputConnecType(),
             mass := inputNumber("Enter the mass per unit metre of beam at the mid-span 'mass' in kg/m : "))
 
-if inputPrintYesNo("\nConduct Cdyn calculation Sec6 AS1170.2 y = [YES] n = [NO] : ",True):
-    Cdyntower_called = func.Cdyntower(inputTerrainIh(z),
+    if inputPrintYesNo("\nConduct cd_cs calculation AnnB EN1991.1.4 [applies to cantilevers / beams with constant sign]\n\
+        y = [YES] n = [NO] : ",True):
+        func.cd_cs(inputNumber("Reference Height for determining structural factor 'z_s' in metres : "))
+
+    if inputPrintYesNo("\nConduct Vortex Shedding Calculation as per EN1991.1.4 [simply supported beams only]\n\
+        y = [YES] n = [NO] : ",True):
+        func.Vortex(inputNumber("Horizontal width of section 'd' in metres : "))
+
+if inputPrintYesNo("\nConduct Cdyn calculation Sec6 AS1170.2 [applies to cantilever structures with even mass distribution]\n\
+     y = [YES] n = [NO] : ",True):
+    func.Cdyntower(inputTerrainIh(z),
             inputNumber("What is the average breadth of the cantilever structure 'bsh' and 'b0h' in metres : "),
             inputNumber("What is the wind gust speed for a 0.2s interval as per AS1170.2 Cl 2.3 in m/s : "),
-            inputDampingAS())
-            
-if cd_cs_called:
-    if inputPrintYesNo("\nConduct Vortex Shedding Calculation as per EN1991.1.4 y = [YES] n = [NO] : ",True):
-        func.Vortex(
-                inputNumber("Horizontal width of section 'd' in metres : "),
-                delta_s,
-                mass)
-else:
-    if inputPrintYesNo("\nConduct Vortex Shedding Calculation as per EN1991.1.4 y = [YES] n = [NO] : ",True):
-        func.Vortex(
-                inputNumber("Horizontal width of section 'd' in metres : "),
-                inputConnecType(),
-                inputNumber("Enter the mass per unit metre of beam at the mid-span 'mass' in kg/m : "))
-                
+            inputDampingAS())   
 
-# %%
 input("Press Any Key to Exit!")
