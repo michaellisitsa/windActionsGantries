@@ -309,13 +309,21 @@ Et={Et:10.2f}\n'))
         print(St)
 
         #Critical Wind Velocity vcrit,i
-        Vcrit = b * self.n / St
-        print(Vcrit)
+        vcrit = b * self.n / St
+        print(vcrit)
 
         #Scruton Number
         Sc = 2 * delta_s * mass / (self.ro * b**2)
         print(Sc)
         return True
+
+        #Reynolds Number
+        v = 15 * 10**-6 #m2/s kinematic velocity of air
+        Re = b * vcrit / v
+        print(Re)
+
+        #Vortex Shedding Action
+        #TODO
 
 #%%
 func = wind_calcs(z := inputNumber("Enter the height above ground 'z' in metres : "),
@@ -330,27 +338,27 @@ cd_cs_called = False
 Cdyntower_called = False
 Vortex_called = False
 
-if inputPrintYesNo("Conduct cd_cs calculation AnnB EN1991.1.4 y = [YES] n = [NO] : ",True):
+if inputPrintYesNo("\nConduct cd_cs calculation AnnB EN1991.1.4 y = [YES] n = [NO] : ",True):
     cd_cs_called = func.cd_cs(inputNumber("Reference Height for determining structural factor 'z_s' in metres : "),
             inputTerrain()[0],
             inputTerrain()[1],
             delta_s := inputConnecType(),
             mass := inputNumber("Enter the mass per unit metre of beam at the mid-span 'mass' in kg/m : "))
 
-if inputPrintYesNo("Conduct Cdyn calculation Sec6 AS1170.2 y = [YES] n = [NO] : ",True):
+if inputPrintYesNo("\nConduct Cdyn calculation Sec6 AS1170.2 y = [YES] n = [NO] : ",True):
     Cdyntower_called = func.Cdyntower(inputTerrainIh(z),
             inputNumber("What is the average breadth of the cantilever structure 'bsh' and 'b0h' in metres : "),
             inputNumber("What is the wind gust speed for a 0.2s interval as per AS1170.2 Cl 2.3 in m/s : "),
             inputDampingAS())
             
 if cd_cs_called:
-    if inputPrintYesNo("Conduct Vortex Shedding Calculation as per EN1991.1.4 y = [YES] n = [NO] : ",True):
+    if inputPrintYesNo("\nConduct Vortex Shedding Calculation as per EN1991.1.4 y = [YES] n = [NO] : ",True):
         func.Vortex(
                 inputNumber("Horizontal width of section 'd' in metres : "),
                 delta_s,
                 mass)
 else:
-    if inputPrintYesNo("Conduct Vortex Shedding Calculation as per EN1991.1.4 y = [YES] n = [NO] : ",True):
+    if inputPrintYesNo("\nConduct Vortex Shedding Calculation as per EN1991.1.4 y = [YES] n = [NO] : ",True):
         func.Vortex(
                 inputNumber("Horizontal width of section 'd' in metres : "),
                 inputConnecType(),
