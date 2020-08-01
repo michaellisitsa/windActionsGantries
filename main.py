@@ -235,32 +235,27 @@ class wind_calcs:
 
         # Ask user whether intermediate results are required:
         print(inputPrintYesNo("Do you want to see the intermediate values? y = [YES] n = [NO]: ",
-        f'TURBULENCE, SPECTRAL FUNC & DAMPING\n\
-        kr={self.kr:10.2f}\n\
-        cr={self.cr:10.2f}\n\
-        vm={self.vm:10.2f}\n\
-        Iv={Iv:10.2f}\n\
-        alpha={alpha:7.2f}\n\
-        L={L:11.2f}\n\
-        fL={fL:10.2f}\n\
-        SL={SL:10.2f}\n\
-        delta_s={self.delta_s:5.2f}\n\
-        delta_a={delta_a:5.2f}\n\n\
-        STRUCTURAL FACTORS INPUTS:\n\
-        B2={B2:10.2f}\n\
-        nh={nh:10.2f}\n\
-        nb={nb:10.2f}\n\
-        Rh={Rh:10.2f}\n\
-        Rb={Rb:10.2f}\n\
-        R2={R2:10.2f}\n\
-        v={v:11.2f}\n\
-        T={T:11.2f}\n\
-        kp={kp:10.2f}\n\n\
-        STRUCTURAL FACTORS:\n\
-        cs={cs:10.2f}\n\
-        cd={cd:10.2f}\n\
-        cs_cd={cs_cd:7.2f}\n\
-        '))
+                            f'TURBULENCE, SPECTRAL FUNC & DAMPING\n'
+                            f'kr={self.kr:10.2f}\n'
+                            f'cr={self.cr:10.2f}\n'
+                            f'vm={self.vm:10.2f}\n'
+                            f'Iv={Iv:10.2f}\n'
+                            f'alpha={alpha:7.2f}\n'
+                            f'L={L:11.2f}\n'
+                            f'fL={fL:10.2f}\n'
+                            f'SL={SL:10.2f}\n'
+                            f'delta_s={self.delta_s:5.2f}\n'
+                            f'delta_a={delta_a:5.2f}\n\n'
+                            f'STRUCTURAL FACTORS INPUTS:\n'
+                            f'B2={B2:10.2f}\n'
+                            f'nh={nh:10.2f}\n'
+                            f'nb={nb:10.2f}\n'
+                            f'Rh={Rh:10.2f}\n'
+                            f'Rb={Rb:10.2f}\n'
+                            f'R2={R2:10.2f}\n'
+                            f'v={v:11.2f}\n'
+                            f'T={T:11.2f}\n'
+                            f'kp={kp:10.2f}'))
 
     def Vortex(self,d):
         b = self.h #height of beam variable definition
@@ -275,6 +270,8 @@ class wind_calcs:
         vcrit = b * self.n / St
 
         #Scruton Number [Ratio structural mass to fluid mass]
+        #The ability of the structure to absorb and dissipate the energy
+        #from vortex shedding depends on the structural damping
         Sc = 2 * self.delta_s * self.mass / (self.ro * b**2)
 
         #Reynolds Number
@@ -293,32 +290,42 @@ class wind_calcs:
             clat = (3 - 2.4 * vcrit_ratio) * clat0
         else:
             clat = 0
+        
+        #TODO - Check whether manually collating mode shape factors is needed in certain structures
+        #Refer Table E.5 for n and m mode shape factors
+        #Refer Table F.1 for phi.iy.s
 
-        Lj = self.b #TODO CHECK CORRECTNESS
+        #Calculate correlation lenght factor on assumption of Lj length.
+        Lj_div_b =  6.0 #TODO CHECK assumption. Based on Sigmund spreadsheets example 30-G
         lamda = l / b
-        Kw = min(math.cos(math.pi / 2 * (1 - (Lj / b) / lamda)),0.6)
+        Kw = min(math.cos(math.pi / 2 * (1 - (Lj_div_b) / lamda)),0.6)
         #Max displacement over time of the point with phi_iy = 1
         Yfmax = b * (1 / St**2) * (1 / Sc) * K * Kw * clat #E.7
 
-        print(f"The maximum displacement over time of a point with phi_iy = 1 is:\n\
-Yfmax={Yfmax:0.3f} m")
+        #Inertia force per unit length
+        phi_iys = 1 #at midspan normalised
+        Fw = self.mass * (2 * math.pi * self.n)**2 * phi_iys * Yfmax
+
+        print(f"The maximum displacement over time of a point with phi_iy = 1 is:\n"
+            f"Yfmax={Yfmax:7.3f} m\n"
+            f"The inertia force per unit length at distance s along beam [taken as midspan] is:\n"
+            f"Fw={Fw:10.0f} N/m")
 
         # Ask user whether intermediate results are required:
         print(inputPrintYesNo("Do you want to see the intermediate values? y = [YES] n = [NO]: ",
-        f'delta_s={self.delta_s:5.2f}\n\
-kr={self.kr:10.2f}\n\
-cr={self.cr:10.2f}\n\
-vm={self.vm:10.2f}\n\
-St={St:10.2f}\n\
-vcrit={vcrit:7.2f}\n\
-Sc={Sc:10.2f}\n\
-Re={Re:10.0f}\n\
-K={K:11.2f}\n\
-clat0={clat0:7.2f}\n\
-clat={clat:8.2f}\n\
-Lj={Lj:10.2f}\n\
-lamda={lamda:7.2f}\n\
-Kw={Kw:10.2f}'))
+                            f'delta_s={self.delta_s:5.2f}\n'
+                            f'kr={self.kr:10.2f}\n'
+                            f'cr={self.cr:10.2f}\n'
+                            f'vm={self.vm:10.2f}\n'
+                            f'St={St:10.2f}\n'
+                            f'vcrit={vcrit:7.2f}\n'
+                            f'Sc={Sc:10.2f}\n'
+                            f'Re={Re:10.0f}\n'
+                            f'K={K:11.2f}\n'
+                            f'clat0={clat0:7.2f}\n'
+                            f'clat={clat:8.2f}\n'
+                            f'lamda={lamda:7.2f}\n'
+                            f'Kw={Kw:10.2f}'))
 
     def Cdyntower(self,Ih,bsh,Vdes,delta2):
         # Convert values from EN terminology to AS1170
@@ -348,18 +355,18 @@ Kw={Kw:10.2f}'))
         
         # Ask user whether intermediate results are required:
         print(inputPrintYesNo("Do you want to see the intermediate values? y = [YES] n = [NO]: ",
-        f'Ih={Ih:10.2f}\n\
-delta2={delta2:6.2f}\n\
-s={s:11.2f}\n\
-gv={gv:10.2f}\n\
-n={na:11.2f}\n\
-Lh={Lh:10.2f}\n\
-Bs={Bs:10.2f}\n\
-Hs={Hs:10.2f}\n\
-gR={gR:10.2f}\n\
-N={N:11.2f}\n\
-S={S:11.2f}\n\
-Et={Et:10.2f}\n'))
+                            f'Ih={Ih:10.2f}\n'
+                            f'delta2={delta2:6.2f}\n'
+                            f's={s:11.2f}\n'
+                            f'gv={gv:10.2f}\n'
+                            f'n={na:11.2f}\n'
+                            f'Lh={Lh:10.2f}\n'
+                            f'Bs={Bs:10.2f}\n'
+                            f'Hs={Hs:10.2f}\n'
+                            f'gR={gR:10.2f}\n'
+                            f'N={N:11.2f}\n'
+                            f'S={S:11.2f}\n'
+                            f'Et={Et:10.2f}\n'))
 
 #%%
 func = wind_calcs(z := inputNumber("Enter the height above ground 'z' in metres : "),
